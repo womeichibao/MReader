@@ -11,6 +11,7 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
 
         let controller = ReaderWindowController.shared
         controller.window?.contentView = hostingView
+        controller.setupTrackingArea()
         controller.showWindow(nil)
         self.windowController = controller
 
@@ -28,7 +29,7 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
             controller.toggleAlwaysOnTop()
         }
         MenuBarManager.shared.onOpenSettings = {
-            // 通过通知或直接呼出
+            NotificationCenter.default.post(name: .readerToggleSettings, object: nil)
         }
         MenuBarManager.shared.setup()
 
@@ -65,19 +66,19 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
                 NotificationCenter.default.post(name: .readerScrollStep, object: CGFloat(AppSettings.shared.scrollStepDistance))
             },
             onOpenChapterList: {
-                // 由 MainReaderView 响应
+                NotificationCenter.default.post(name: .readerToggleDrawer, object: nil)
             },
             onOpenSearch: {
-                // 由 MainReaderView 响应
+                NotificationCenter.default.post(name: .readerToggleSearch, object: nil)
             },
             onOpenJumpPercent: {
-                // 由 MainReaderView 响应
+                NotificationCenter.default.post(name: .readerToggleJumpPercent, object: nil)
             },
             onAddBookmark: {
                 BookManager.shared.addCurrentBookmark()
             },
             onOpenSettings: {
-                // 打开设置
+                NotificationCenter.default.post(name: .readerToggleSettings, object: nil)
             }
         )
 

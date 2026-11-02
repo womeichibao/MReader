@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import UniformTypeIdentifiers
 
 public class BookManager: ObservableObject {
     public static let shared = BookManager()
@@ -15,7 +16,15 @@ public class BookManager: ObservableObject {
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.allowedContentTypes = [.plainText, .epub]
+
+        var types: [UTType] = [.plainText]
+        if let txtType = UTType(filenameExtension: "txt") {
+            types.append(txtType)
+        }
+        if let epubType = UTType(filenameExtension: "epub") {
+            types.append(epubType)
+        }
+        panel.allowedContentTypes = types
 
         if panel.runModal() == .OK, let url = panel.url {
             openFile(url: url)

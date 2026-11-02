@@ -87,7 +87,7 @@ public class ReaderWindowController: NSWindowController, NSWindowDelegate {
     }
 
     // 设置鼠标移入/移出跟踪区域
-    private func setupTrackingArea() {
+    public func setupTrackingArea() {
         guard let contentView = window?.contentView else { return }
         if let old = trackingArea {
             contentView.removeTrackingArea(old)

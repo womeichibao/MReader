@@ -95,6 +95,20 @@ public struct MainReaderView: View {
         .onReceive(NotificationCenter.default.publisher(for: .readerNextChapter)) { _ in
             bookManager.nextChapter()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .readerToggleDrawer)) { _ in
+            withAnimation(.spring(response: 0.3)) {
+                showDrawer.toggle()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .readerToggleSearch)) { _ in
+            showSearch.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .readerToggleJumpPercent)) { _ in
+            showJumpPercent.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .readerToggleSettings)) { _ in
+            showSettings.toggle()
+        }
     }
 
     // 空状态提示

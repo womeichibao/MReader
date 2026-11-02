@@ -7,8 +7,7 @@ public struct ReaderContentView: View {
 
     // 自动滚动 Timer
     @State private var autoScrollTimer: Timer?
-    @State private var scrollPosition: CGFloat = 0.0
-    @State private var maxScrollHeight: CGFloat = 1000.0
+    @State private var underlyingScrollView: NSScrollView?
 
     public var onScrollChanged: ((Double) -> Void)?
 
@@ -57,10 +56,15 @@ public struct ReaderContentView: View {
                         .padding(.horizontal, CGFloat(settings.horizontalPadding))
                         .padding(.top, CGFloat(settings.verticalPadding))
                         .padding(.bottom, CGFloat(settings.verticalPadding) + 40)
+                        .background(ScrollViewAccessor { scrollView in
+                            self.underlyingScrollView = scrollView
+                        })
                     }
-                    .background(GeometryReader { scrollGeo in
-                        Color.clear.preference(key: ViewHeightKey.self, value: scrollGeo.size.height)
-                    })
+                    .onChange(of: book.currentChapterIndex) { _ in
+                        withAnimation {
+                            proxy.scrollTo("top_of_chapter", anchor: .top)
+                        }
+                    }
                 }
 
                 // 底部微型状态栏（在无边框摸鱼时低调半透明显示进度与章节）
@@ -85,6 +89,36 @@ public struct ReaderContentView: View {
                 setupAutoScrollTimer()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .readerScrollStep)) { notification in
+            if let step = notification.object as? CGFloat {
+                scrollBy(step: step)
+            }
+        }
+    }
+
+    private func scrollBy(step: CGFloat) {
+        guard let scrollView = underlyingScrollView, let documentView = scrollView.documentView else { return }
+        var currentOrigin = scrollView.contentView.bounds.origin
+        let contentHeight = documentView.bounds.height
+        let visibleHeight = scrollView.contentView.bounds.height
+        let maxOriginY = max(0, contentHeight - visibleHeight)
+
+        currentOrigin.y += step
+
+        // 如果滚动触底，自动翻到下一章
+        if currentOrigin.y >= maxOriginY && step > 0 && maxOriginY > 0 {
+            if currentOrigin.y > maxOriginY + 20 {
+                BookManager.shared.nextChapter()
+                return
+            }
+        }
+
+        currentOrigin.y = min(max(0, currentOrigin.y), maxOriginY)
+        scrollView.contentView.scroll(to: currentOrigin)
+        scrollView.reflectScrolledClipView(scrollView.contentView)
+
+        let progress = maxOriginY > 0 ? Double(currentOrigin.y / maxOriginY) : 0.0
+        onScrollChanged?(progress)
     }
 
     // 格式化段落（首行缩进两个全角空格）
@@ -160,6 +194,10 @@ public extension Notification.Name {
     static let readerScrollToPercent = Notification.Name("readerScrollToPercent")
     static let readerPrevChapter = Notification.Name("readerPrevChapter")
     static let readerNextChapter = Notification.Name("readerNextChapter")
+    static let readerToggleDrawer = Notification.Name("readerToggleDrawer")
+    static let readerToggleSearch = Notification.Name("readerToggleSearch")
+    static let readerToggleJumpPercent = Notification.Name("readerToggleJumpPercent")
+    static let readerToggleSettings = Notification.Name("readerToggleSettings")
 }
 
 struct ViewHeightKey: PreferenceKey {
@@ -167,4 +205,24 @@ struct ViewHeightKey: PreferenceKey {
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
     }
+}
+
+public struct ScrollViewAccessor: NSViewRepresentable {
+    public let onScrollViewFound: (NSScrollView) -> Void
+
+    public init(onScrollViewFound: @escaping (NSScrollView) -> Void) {
+        self.onScrollViewFound = onScrollViewFound
+    }
+
+    public func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            if let scrollView = view.enclosingScrollView {
+                onScrollViewFound(scrollView)
+            }
+        }
+        return view
+    }
+
+    public func updateNSView(_ nsView: NSView, context: Context) {}
 }

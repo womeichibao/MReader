@@ -94,11 +94,14 @@ public struct SearchPanel: View {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
+        // 在主线程制作章节数据的局部不可变快照，避免后台并发遍历时主线程发生数据修改引发崩溃
+        let chaptersSnapshot = book.chapters
+
         isSearching = true
         DispatchQueue.global(qos: .userInitiated).async {
             var results: [SearchResultItem] = []
 
-            for chapter in book.chapters {
+            for chapter in chaptersSnapshot {
                 let text = chapter.content
                 if let range = text.range(of: trimmed, options: .caseInsensitive) {
                     let start = text.index(range.lowerBound, offsetBy: -30, limitedBy: text.startIndex) ?? text.startIndex

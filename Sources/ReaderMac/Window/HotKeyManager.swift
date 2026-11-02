@@ -31,6 +31,17 @@ public class HotKeyManager {
             let keyCode = event.keyCode
             let chars = event.charactersIgnoringModifiers ?? ""
 
+            // 如果当前第一响应者是可编辑文本控件（例如搜索框或输入框），放行文字输入与空格/光标
+            if HotKeyManager.isTextInputFocused() {
+                // 仅允许极少特定的系统/全局热键如老板键透传，其他普通打字按键和方向键不拦截
+                if (flags == [.command, .shift] && chars.lowercased() == "h") ||
+                   (flags == [.option] && chars.lowercased() == "h") {
+                    onToggleBossKey()
+                    return nil
+                }
+                return event
+            }
+
             // 1. 老板键: Cmd+Shift+H 或 Option+H
             if (flags == [.command, .shift] && chars.lowercased() == "h") ||
                (flags == [.option] && chars.lowercased() == "h") {
@@ -117,5 +128,19 @@ public class HotKeyManager {
             NSEvent.removeMonitor(monitor)
             localMonitor = nil
         }
+    }
+
+    private static func isTextInputFocused() -> Bool {
+        guard let window = NSApp.keyWindow,
+              let firstResponder = window.firstResponder else {
+            return false
+        }
+        if let textView = firstResponder as? NSTextView {
+            return textView.isEditable
+        }
+        if firstResponder is NSTextField {
+            return true
+        }
+        return false
     }
 }

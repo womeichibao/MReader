@@ -39,6 +39,7 @@ public class ReadingHistoryManager {
     private let userDefaultsKey = "com.reader.reading_history"
 
     private var historyMap: [String: BookHistory] = [:]
+    private var saveTimer: Timer?
 
     private init() {
         load()
@@ -53,12 +54,23 @@ public class ReadingHistoryManager {
         }
     }
 
+    /// 立即同步落盘
     public func save() {
+        saveTimer?.invalidate()
+        saveTimer = nil
         do {
             let data = try JSONEncoder().encode(historyMap)
             UserDefaults.standard.set(data, forKey: userDefaultsKey)
         } catch {
             print("Failed to encode history: \(error)")
+        }
+    }
+
+    /// 防抖保存，避免高频滚动时频繁阻塞主线程磁盘 I/O
+    private func scheduleSave(delay: TimeInterval = 1.0) {
+        saveTimer?.invalidate()
+        saveTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+            self?.save()
         }
     }
 
@@ -72,7 +84,7 @@ public class ReadingHistoryManager {
         item.scrollProgress = scrollProgress
         item.lastReadDate = Date()
         historyMap[filePath] = item
-        save()
+        scheduleSave()
     }
 
     public func addBookmark(for filePath: String, bookmark: Bookmark) {

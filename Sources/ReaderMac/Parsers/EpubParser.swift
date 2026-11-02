@@ -71,8 +71,17 @@ public class EpubParser {
         // 提取各个章节文本
         var chapters: [Chapter] = []
         for (index, idref) in spineIds.enumerated() {
-            guard let href = manifest[idref] else { continue }
-            let chapterURL = opfDir.appendingPathComponent(href)
+            guard let rawHref = manifest[idref] else { continue }
+
+            // 剥离 # 锚点并解码 URL 转义符（如 %20）
+            let cleanHref = rawHref.components(separatedBy: "#").first ?? rawHref
+            let decodedHref = cleanHref.removingPercentEncoding ?? cleanHref
+
+            var chapterURL = opfDir.appendingPathComponent(decodedHref)
+            if !FileManager.default.fileExists(atPath: chapterURL.path) {
+                chapterURL = opfDir.appendingPathComponent(cleanHref)
+            }
+
             guard let data = try? Data(contentsOf: chapterURL) else { continue }
 
             let (htmlContent, _) = (try? EncodingDetector.detectAndRead(from: data)) ?? (String(decoding: data, as: UTF8.self), "UTF-8")
