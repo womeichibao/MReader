@@ -27,6 +27,7 @@ public class ReaderWindowController: NSWindowController, NSWindowDelegate {
     private var mouseExitTimer: Timer?
     private var isHiddenByBossKey: Bool = false
     private var trackingArea: NSTrackingArea?
+    private let windowFrameKey = "com.reader.window_frame"
 
     public init() {
         let initialRect = NSRect(x: 100, y: 100, width: 720, height: 600)
@@ -43,9 +44,9 @@ public class ReaderWindowController: NSWindowController, NSWindowDelegate {
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
         window.minSize = NSSize(width: 320, height: 200)
-        window.center()
         window.delegate = self
 
+        restoreWindowFrame()
         applySettings()
         setupTrackingArea()
     }
@@ -147,5 +148,41 @@ public class ReaderWindowController: NSWindowController, NSWindowDelegate {
     public func toggleAlwaysOnTop() {
         AppSettings.shared.isAlwaysOnTop.toggle()
         applySettings()
+    }
+
+    // 切换全屏
+    public func toggleFullScreen() {
+        window?.toggleFullScreen(nil)
+    }
+
+    // 窗口尺寸与位置记忆
+    public func windowDidMove(_ notification: Notification) {
+        saveWindowFrame()
+    }
+
+    public func windowDidResize(_ notification: Notification) {
+        saveWindowFrame()
+    }
+
+    private func saveWindowFrame() {
+        guard let window = self.window else { return }
+        // 全屏时不覆盖普通窗口 frame
+        if window.styleMask.contains(.fullScreen) { return }
+        let frameStr = NSStringFromRect(window.frame)
+        UserDefaults.standard.set(frameStr, forKey: windowFrameKey)
+    }
+
+    private func restoreWindowFrame() {
+        guard let window = self.window,
+              let frameStr = UserDefaults.standard.string(forKey: windowFrameKey) else {
+            window?.center()
+            return
+        }
+        let rect = NSRectFromString(frameStr)
+        if rect.width > 200 && rect.height > 150 {
+            window.setFrame(rect, display: true)
+        } else {
+            window.center()
+        }
     }
 }

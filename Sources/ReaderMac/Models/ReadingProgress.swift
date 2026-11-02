@@ -40,6 +40,12 @@ public class ReadingHistoryManager {
 
     private var historyMap: [String: BookHistory] = [:]
     private var saveTimer: Timer?
+    private let lastBookKey = "com.reader.last_opened_book"
+
+    public var lastOpenedFilePath: String? {
+        get { UserDefaults.standard.string(forKey: lastBookKey) }
+        set { UserDefaults.standard.set(newValue, forKey: lastBookKey) }
+    }
 
     private init() {
         load()

@@ -84,6 +84,9 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 4. 构建标准系统主菜单
         setupMainMenu()
+
+        // 5. 自动恢复上次阅读书籍
+        BookManager.shared.restoreLastBookIfAvailable()
     }
 
     public func application(_ application: NSApplication, openFiles filenames: [String]) {

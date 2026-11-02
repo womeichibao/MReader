@@ -57,7 +57,8 @@ public class BookManager: ObservableObject {
                         }
                     }
 
-                    // 更新窗口标题
+                    // 更新窗口标题与最后打开记录
+                    ReadingHistoryManager.shared.lastOpenedFilePath = book.filePath
                     ReaderWindowController.shared.window?.title = "\(book.title) - Reader"
                 }
             } catch {
@@ -116,5 +117,13 @@ public class BookManager: ObservableObject {
         )
 
         ReadingHistoryManager.shared.addBookmark(for: book.filePath, bookmark: bookmark)
+    }
+
+    public func restoreLastBookIfAvailable() {
+        guard let path = ReadingHistoryManager.shared.lastOpenedFilePath else { return }
+        let fileURL = URL(fileURLWithPath: path)
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            openFile(url: fileURL)
+        }
     }
 }

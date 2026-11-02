@@ -55,6 +55,20 @@ public class HotKeyManager {
                 return nil
             }
 
+            // 2.1 F11 (keyCode 103): 全屏切换
+            if keyCode == 103 {
+                ReaderWindowController.shared.toggleFullScreen()
+                return nil
+            }
+
+            // 2.2 Esc (keyCode 53): 退出全屏或无边框
+            if flags.isEmpty && keyCode == 53 {
+                if ReaderWindowController.shared.window?.styleMask.contains(.fullScreen) == true {
+                    ReaderWindowController.shared.toggleFullScreen()
+                    return nil
+                }
+            }
+
             // 3. Cmd+T: 窗口置顶/取消置顶
             if flags == .command && chars.lowercased() == "t" {
                 onToggleAlwaysOnTop()
