@@ -1,6 +1,10 @@
 # MReader (Reader for Mac)
 
 <p align="center">
+  <img src="scripts/icon_1024.png" alt="MReader Logo" width="100" height="100" style="border-radius: 22px;"/>
+</p>
+
+<p align="center">
   <strong>基于 Swift 6 与 AppKit / SwiftUI 构建的原生轻量级 macOS 小说阅读器</strong><br>
   轻量极简 · 低资源占用 · 无边框拖拽 · 双通道透明度 · 摸鱼看书神器
 </p>

@@ -25,4 +25,8 @@ if [ -f "$DIR/scripts/Info.plist" ]; then
     cp "$DIR/scripts/Info.plist" "$CONTENTS_DIR/Info.plist"
 fi
 
+if [ -f "$DIR/scripts/AppIcon.icns" ]; then
+    cp "$DIR/scripts/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
+fi
+
 echo "✅ 打包完成！应用程序位于: $APP_DIR"
