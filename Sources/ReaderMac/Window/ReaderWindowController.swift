@@ -19,6 +19,145 @@ public class CustomReaderWindow: NSWindow {
             super.mouseDown(with: event)
         }
     }
+
+    // 滚轮快捷调节透明度 (对标原版 Ctrl/Cmd+滚轮调窗口透明度, Option/Alt+滚轮调文字透明度)
+    public override func scrollWheel(with event: NSEvent) {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let delta = event.scrollingDeltaY
+
+        // 1. Cmd + 滚轮 或 Ctrl + 滚轮: 调节窗口整体透明度与背景透明度
+        if flags.contains(.command) || flags.contains(.control) {
+            if abs(delta) > 0.1 {
+                let step = delta > 0 ? 0.05 : -0.05
+                var current = AppSettings.shared.windowOpacity
+                current = min(max(current + step, 0.1), 1.0)
+                AppSettings.shared.windowOpacity = current
+                ReaderWindowController.shared.applySettings()
+            }
+            return
+        }
+
+        // 2. Option + 滚轮: 调节字体/文字透明度
+        if flags.contains(.option) {
+            if abs(delta) > 0.1 {
+                let step = delta > 0 ? 0.05 : -0.05
+                var current = AppSettings.shared.textOpacity
+                current = min(max(current + step, 0.2), 1.0)
+                AppSettings.shared.textOpacity = current
+            }
+            return
+        }
+
+        super.scrollWheel(with: event)
+    }
+
+    // 支持全窗口右键快捷弹出上下文菜单 (在无边框隐藏标题栏时尤其好用)
+    public override func rightMouseDown(with event: NSEvent) {
+        let menu = NSMenu(title: "ReaderContextMenu")
+
+        let openItem = NSMenuItem(title: "打开电子书...", action: #selector(contextOpen), keyEquivalent: "o")
+        openItem.target = self
+        menu.addItem(openItem)
+
+        let drawerItem = NSMenuItem(title: "目录抽屉", action: #selector(contextDrawer), keyEquivalent: "l")
+        drawerItem.target = self
+        menu.addItem(drawerItem)
+
+        let searchItem = NSMenuItem(title: "全文搜索", action: #selector(contextSearch), keyEquivalent: "f")
+        searchItem.target = self
+        menu.addItem(searchItem)
+
+        let jumpItem = NSMenuItem(title: "进度跳转", action: #selector(contextJump), keyEquivalent: "g")
+        jumpItem.target = self
+        menu.addItem(jumpItem)
+
+        let bookmarkItem = NSMenuItem(title: "添加书签", action: #selector(contextBookmark), keyEquivalent: "d")
+        bookmarkItem.target = self
+        menu.addItem(bookmarkItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        let borderlessItem = NSMenuItem(title: "无边框极简模式", action: #selector(contextBorderless), keyEquivalent: "b")
+        borderlessItem.state = AppSettings.shared.isBorderless ? .on : .off
+        borderlessItem.target = self
+        menu.addItem(borderlessItem)
+
+        let topItem = NSMenuItem(title: "窗口始终置顶", action: #selector(contextTop), keyEquivalent: "t")
+        topItem.state = AppSettings.shared.isAlwaysOnTop ? .on : .off
+        topItem.target = self
+        menu.addItem(topItem)
+
+        let fullScreenItem = NSMenuItem(title: "全屏切换", action: #selector(contextFullScreen), keyEquivalent: "")
+        fullScreenItem.target = self
+        menu.addItem(fullScreenItem)
+
+        let bossItem = NSMenuItem(title: "老板键瞬间隐藏", action: #selector(contextBoss), keyEquivalent: "h")
+        bossItem.keyEquivalentModifierMask = [.command, .shift]
+        bossItem.target = self
+        menu.addItem(bossItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        let settingsItem = NSMenuItem(title: "偏好设置...", action: #selector(contextSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        let quitItem = NSMenuItem(title: "退出 Reader", action: #selector(contextQuit), keyEquivalent: "q")
+        quitItem.target = self
+        menu.addItem(quitItem)
+
+        NSMenu.popUpContextMenu(menu, with: event, for: self.contentView ?? self.visualEffectView())
+    }
+
+    private func visualEffectView() -> NSView {
+        return self.contentView ?? NSView()
+    }
+
+    @objc private func contextOpen() {
+        BookManager.shared.promptOpenFile()
+    }
+
+    @objc private func contextDrawer() {
+        NotificationCenter.default.post(name: .readerToggleDrawer, object: nil)
+    }
+
+    @objc private func contextSearch() {
+        NotificationCenter.default.post(name: .readerToggleSearch, object: nil)
+    }
+
+    @objc private func contextJump() {
+        NotificationCenter.default.post(name: .readerToggleJumpPercent, object: nil)
+    }
+
+    @objc private func contextBookmark() {
+        BookManager.shared.addCurrentBookmark()
+    }
+
+    @objc private func contextBorderless() {
+        ReaderWindowController.shared.toggleBorderless()
+    }
+
+    @objc private func contextTop() {
+        ReaderWindowController.shared.toggleAlwaysOnTop()
+    }
+
+    @objc private func contextFullScreen() {
+        ReaderWindowController.shared.toggleFullScreen()
+    }
+
+    @objc private func contextBoss() {
+        ReaderWindowController.shared.toggleBossKey()
+    }
+
+    @objc private func contextSettings() {
+        NotificationCenter.default.post(name: .readerToggleSettings, object: nil)
+    }
+
+    @objc private func contextQuit() {
+        NSApp.terminate(nil)
+    }
 }
 
 public class ReaderWindowController: NSWindowController, NSWindowDelegate {
