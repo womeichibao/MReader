@@ -35,7 +35,7 @@ public struct MainReaderView: View {
 
             // 悬停浮动工具条（极简低调，摸鱼友好）
             floatingToolbar
-                .opacity(isHoveringControls ? 1.0 : (settings.isBorderless ? 0.05 : 0.8))
+                .opacity(isHoveringControls ? 1.0 : (settings.isBorderless ? 0.35 : 0.8))
                 .animation(.easeInOut(duration: 0.2), value: isHoveringControls)
                 .onHover { hovering in
                     isHoveringControls = hovering
@@ -53,6 +53,15 @@ public struct MainReaderView: View {
                 }
             }
         }
+        .overlay(
+            Group {
+                if settings.isBorderless {
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+                        .allowsHitTesting(false)
+                }
+            }
+        )
         // 支持拖拽文件至窗口打开
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             guard let provider = providers.first else { return false }

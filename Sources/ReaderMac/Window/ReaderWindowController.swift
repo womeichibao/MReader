@@ -201,7 +201,7 @@ public class ReaderWindowController: NSWindowController, NSWindowDelegate {
         // 1. 无边框模式切换
         if settings.isBorderless {
             window.styleMask = [.borderless, .resizable]
-            window.hasShadow = false
+            window.hasShadow = true
         } else {
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             window.titlebarAppearsTransparent = true
@@ -292,6 +292,24 @@ public class ReaderWindowController: NSWindowController, NSWindowDelegate {
     // 切换全屏
     public func toggleFullScreen() {
         window?.toggleFullScreen(nil)
+    }
+
+    // 一键重置为安全可视的默认窗口外观与尺寸
+    public func resetWindowAppearance() {
+        AppSettings.shared.selectedThemeId = ReadingTheme.parchment.id
+        AppSettings.shared.windowOpacity = 1.0
+        AppSettings.shared.backgroundOpacity = 1.0
+        AppSettings.shared.textOpacity = 1.0
+        AppSettings.shared.isBorderless = false
+        AppSettings.shared.isAlwaysOnTop = false
+
+        if let window = self.window {
+            window.setFrame(NSRect(x: 100, y: 100, width: 720, height: 600), display: true)
+            window.center()
+            applySettings()
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 
     // 窗口尺寸与位置记忆

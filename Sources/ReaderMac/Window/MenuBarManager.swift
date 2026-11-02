@@ -10,6 +10,7 @@ public class MenuBarManager {
     public var onToggleBorderless: (() -> Void)?
     public var onToggleAlwaysOnTop: (() -> Void)?
     public var onOpenSettings: (() -> Void)?
+    public var onResetWindow: (() -> Void)?
     public var onToggleHideDockIcon: (() -> Void)?
 
     private init() {}
@@ -55,6 +56,11 @@ public class MenuBarManager {
         settingsItem.target = self
         menu.addItem(settingsItem)
 
+        let resetItem = NSMenuItem(title: "恢复标准窗口外观与居中", action: #selector(handleReset), keyEquivalent: "r")
+        resetItem.keyEquivalentModifierMask = [.command, .shift]
+        resetItem.target = self
+        menu.addItem(resetItem)
+
         menu.addItem(NSMenuItem.separator())
 
         let quitItem = NSMenuItem(title: "退出 Reader", action: #selector(handleQuit), keyEquivalent: "q")
@@ -84,6 +90,11 @@ public class MenuBarManager {
 
     @objc private func handleSettings() {
         onOpenSettings?()
+    }
+
+    @objc private func handleReset() {
+        onResetWindow?()
+        buildMenu()
     }
 
     @objc private func handleQuit() {

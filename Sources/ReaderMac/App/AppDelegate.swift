@@ -5,6 +5,9 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
     public var windowController: ReaderWindowController?
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
+        // 确保应用被激活为标准 GUI 应用
+        NSApp.setActivationPolicy(.regular)
+
         // 1. 设置主窗口视图
         let mainView = MainReaderView(bookManager: BookManager.shared)
         let hostingView = NSHostingView(rootView: mainView)
@@ -12,7 +15,8 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         let controller = ReaderWindowController.shared
         controller.window?.contentView = hostingView
         controller.setupTrackingArea()
-        controller.showWindow(nil)
+        controller.window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
         self.windowController = controller
 
         // 2. 初始化菜单栏状态图标
@@ -30,6 +34,9 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         }
         MenuBarManager.shared.onOpenSettings = {
             NotificationCenter.default.post(name: .readerToggleSettings, object: nil)
+        }
+        MenuBarManager.shared.onResetWindow = {
+            controller.resetWindowAppearance()
         }
         MenuBarManager.shared.setup()
 
@@ -97,6 +104,14 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
 
     public func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false // 点击红叉关闭窗口时保持后台或菜单栏常驻摸鱼
+    }
+
+    public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if let window = windowController?.window {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+        return true
     }
 
     private func setupMainMenu() {
