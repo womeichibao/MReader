@@ -8,3 +8,4 @@ DerivedData/
 build/
 dist/
 *.app
+.idea/
